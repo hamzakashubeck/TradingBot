@@ -17,7 +17,10 @@ from bs4 import BeautifulSoup
 #     1. Find a more efficient way to grab crypto asset prices. Currently web scraping from Robinhood,
 #     but a crypto API or alternate solution would be faster and result in more accurate signals.
 #
-#     2. Many edits will be the same between the stock_trader and crypto_trader. Consider merging in the future?
+#     2. Find a way to source and incorporate bid and ask prices for crypto assets. Currently only midpoint is scraped, 
+#     resulting in signals that do not account for money leakage due to the bid/ask spread.
+#
+#     3. Many edits will be the same between the stock_trader and crypto_trader. Consider merging in the future?
 
 
 # ---------------- ALPACA HELPER FUNCTIONS HERE -------------------- #
