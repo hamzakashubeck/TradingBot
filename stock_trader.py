@@ -1,5 +1,5 @@
 '''
-Created on Jul 29, 2022
+Created on Jul 12, 2022
 
 @author: hamzakashubeck
 '''
@@ -7,6 +7,7 @@ Created on Jul 29, 2022
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
+import time
 from datetime import datetime
 
 # ---------------- ALPACA HELPER FUNCTIONS HERE -------------------- #
@@ -42,7 +43,7 @@ def order_status(order_id):
 
     #retrieves the current market price from yahoo finance
 def get_price(ticker):
-    return Ticker(ticker).price[ticker]['regularMarketPrice']
+    return round(Ticker(ticker).price[ticker]['regularMarketPrice'],2)
 
     #retrieves the current bid price from yahoo finance
 def get_bid_price(ticker):
@@ -54,15 +55,20 @@ def get_ask_price(ticker):
 
     #retrieves the current rsi value calculated from recent minute closing prices from yahoo finance
 def get_rsi_val(ticker):
-    candles = Ticker(ticker).history(period='5d', interval='1m')
+    candles = Ticker(ticker).history(period='3d', interval='1m')
     return talib.stream_RSI(candles.close,timeperiod = 12)
 
     #retrieves bollinger band values calculated from recent minute closing prices from yahoo finance
 def get_bbands(ticker):
-    candles = Ticker(ticker).history(period='4d', interval='1m')
+    candles = Ticker(ticker).history(period='3d', interval='1m')
     return talib.stream_BBANDS(candles.close)
 
-# --------------------- ALGORITHM/TESTING FUNCTIONS --------------------------- #
+    #retrieves stochastic rsi values calculated from recent minute closing prices from yahoo finance
+def get_stochrsi(ticker):
+    candles = Ticker(ticker).history(period='2d', interval='1m')
+    return talib.stream_STOCHRSI(candles.close, fastk_period=5)
+
+# --------------------- ALGORITHM SIGNAL FUNCTIONS --------------------------- #
 
     # returns a 0 for inconclusive, 1 for buy signal, 2 for sell signal
 def get_bbands_signal(ticker):
@@ -75,38 +81,88 @@ def get_bbands_signal(ticker):
         print('bbands SELL signal at '+str(datetime.now())+ ' at a price of '+str(price))
         return 2
     return 0
+
+    # returns a 0 for inconclusive, 1 for buy signal, 2 for sell signal
+def get_rsi_signal(ticker):
+    price = get_price(ticker)
+    rsi = get_rsi_val(ticker)
+    if rsi < 30:
+        print('RSI BUY signal at '+str(datetime.now()))
+        return 1
+    if rsi > 70:
+        print('RSI SELL signal at '+str(datetime.now()))
+        return 2
+    return 0
+
+    # returns a 0 for inconclusive, 1 for buy signal, 2 for sell signal
+def get_stochrsi_signal(ticker):
+    k, d = get_stochrsi(ticker)
     
-    #runs the main simulation
-def trade_SPY_test():
+    print(k)
+    if k < 20:
+        # wait until the stochastic rsi fast k line rebounds above the oversold mark
+        
+        print("entered stochrsi buy signal loop:")
+        while k<20:
+            #do nothing
+            time.sleep(0.5)
+            k, d = get_stochrsi(ticker)
+            print(k)
+        #at this point, the fast k line is rebounding above the 20 mark.
+        print('STOCHRSI BUY signal at '+str(datetime.now()))
+        return 1
+    if k>80:
+        # sell immediately when the fast k line hits 70
+        print('STOCHRSI SELL signal at '+str(datetime.now()))
+        return 2
+    
+    
+# --------------------- TESTING/SIMULATION FUNCTIONS --------------------------- #
+    
+    #runs the main simulation. parameter is the desired algorithm signal function to be used for buy/sell signals.
+def trade_SPY(signal_func):
     ticker = 'SPY'
     
     last_signal = 0
     while(True):
-        signal = get_bbands_signal(ticker)
+        
+        try:
+            time.sleep(1)
+            signal = signal_func(ticker)
+        except Exception as e:
+            # been getting a lot of exceptions involving inability to communicate with yahooquery. check this out later.
+            print(e)
+            time.sleep(5)
+            signal = 0
         
         if signal == 1:
             if last_signal!=1: #BUY
                 last_signal = 1
                 try:
-                    limit_buy(ticker,1,get_ask_price(ticker)) #Buy at the current ask price
+                    limit_buy(ticker,1,round(get_ask_price(ticker)+0.25,2)) #Buy around the current ask price
                     print('BUY ORDER AT '+str(datetime.now()))
-                except:
+                except Exception as e:
+                    print(e)
                     print('BUY ORDER AT '+str(datetime.now())+ ', but not enough buying power.')
                 #order will fail if not enough cash available
                 
         elif signal == 2: #SELL
-            last_signal = 2
-            #qty_held = int(alpaca.get_position(ticker).qty)
-            #if qty_held>0:
-            try:
-                limit_sell(ticker,1,get_bid_price(ticker)) #Sell at the current bid price
-                print('SELL ORDER AT '+str(datetime.now()))
-            except:
-                print('SELL ORDER AT '+str(datetime.now())+ ', but no shares are currently owned.')
+            if last_signal!=2: #SELL
+                last_signal = 2
+                #qty_held = int(alpaca.get_position(ticker).qty)
+                #if qty_held>0:
+                try:
+                    limit_sell(ticker,1,round(get_bid_price(ticker)-0.25,2)) #Sell around the current bid price
+                    print('SELL ORDER AT '+str(datetime.now()))
+                except Exception as e:
+                    print(e)
+                    print('SELL ORDER AT '+str(datetime.now())+ ', but no shares are currently owned.')
         else:
+            #print('no signal to report')
             last_signal = 0
 
 # ----------------------- END HELPER FUNCTIONS ----------------------------- #
+
 
 # The following input values would be specific to my Alpaca account:
 API_KEY = ''
@@ -115,4 +171,7 @@ BASE_URL = 'https://paper-api.alpaca.markets'
 
 alpaca = api.REST(API_KEY, API_SECRET, BASE_URL)
 
-trade_SPY_test()
+#modify the following statement to run different technical indicators
+signal_func = get_stochrsi_signal
+
+trade_SPY(signal_func)
