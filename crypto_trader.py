@@ -6,7 +6,6 @@ Created on Jul 29, 2022
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
-import time
 from datetime import datetime
 
 import requests
