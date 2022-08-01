@@ -113,6 +113,9 @@ def get_stochrsi_signal(ticker):
     if k < 20:
         # wait until the stochastic rsi fast k line rebounds above the oversold mark
         
+#         is this the best way to solve this problem? this will need to be changed before 
+#         it's possible to use multiple indicators simultaneously
+        
         print("entered stochrsi buy signal loop:")
         while k<20:
             #do nothing
@@ -173,8 +176,8 @@ def trade_SPY(signal_func):
 # ----------------------- END HELPER FUNCTIONS ----------------------------- #
 
 # The following input values would be specific to my Alpaca account:
-API_KEY = ''
-API_SECRET = ''
+API_KEY = 'PK0OXHA2VMTEKUYTWTQP'
+API_SECRET = 'Lx8UrXCo3UFHH9BRAWysASkFsQD2LjjtMX0x1NMz'
 BASE_URL = 'https://paper-api.alpaca.markets'
 
 alpaca = api.REST(API_KEY, API_SECRET, BASE_URL)
@@ -183,3 +186,6 @@ alpaca = api.REST(API_KEY, API_SECRET, BASE_URL)
 signal_func = get_stochrsi_signal
 
 trade_SPY(signal_func)
+
+# maybe loop through the list of open positions and see what should be closed. 
+# then loop through the list of securities and indicators to see if any should be opened
