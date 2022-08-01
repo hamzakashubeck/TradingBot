@@ -3,6 +3,7 @@ Created on Jul 29, 2022
 
 @author: hamzakashubeck
 '''
+
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
@@ -10,6 +11,13 @@ from datetime import datetime
 
 import requests
 from bs4 import BeautifulSoup
+
+
+# TO-DO NEXT:
+#     1. Find a more efficient way to grab crypto asset prices. Currently web scraping from Robinhood,
+#     but a crypto API or alternate solution would be faster and result in more accurate signals.
+#
+#     2. Many edits will be the same between the stock_trader and crypto_trader. Consider merging in the future?
 
 
 # ---------------- ALPACA HELPER FUNCTIONS HERE -------------------- #
@@ -41,7 +49,7 @@ def order_status(order_id):
     order = alpaca.get_order(order_id)
     return order.status
     
-# ---------------- CRYPTO RESEARCH HELPER FUNCTIONS HERE -------------------- #
+# ---------------- STOCK RESEARCH HELPER FUNCTIONS HERE -------------------- #
 
     #retrieves the current midpoint price scraped from robinhood. 
     # TO-DO: find a more efficient and accurate way to grab crypto asset prices
@@ -62,19 +70,32 @@ def get_bid_price(ticker):
 def get_ask_price(ticker):
     #TO-DO: see note above
     return -1
- 
-    #retrieves the current rsi value calculated from recent yahoo finance historical pricing
+
+    #calculates the current rsi value from recent historical prices from yahoo finance
     # currently retrieves data in two-minute intervals, despite the function calling for one minute)
 def get_rsi_val(ticker):
     candles = Ticker(ticker).history(period='5d', interval='1m')
+    print(candles)
     return talib.stream_RSI(candles.close,timeperiod = 12)
 
-    #retrieves bollinger band values calculated from recent minute closing prices from yahoo finance
+    #retrieves bollinger band values calculated from historical two-minute interval closing prices from yahoo finance
 def get_bbands(ticker):
     candles = Ticker(ticker).history(period='5d', interval='1m')
     return talib.stream_BBANDS(candles.close)
 
 # --------------------- ALGORITHM/TESTING FUNCTIONS --------------------------- #
+
+# 0 for inconclusive, 1 for buy, 2 for sell
+def get_middle_bbands_signal(ticker):
+    price = get_crypto_price('BTC')
+    upper, middle, lower = get_bbands(ticker)
+    if price < middle:
+        print('bbands BUY signal at '+str(datetime.now())+ ' at a price of '+str(price))
+        return 1
+    if price > middle:
+        print('bbands SELL signal at '+str(datetime.now())+ ' at a price of '+str(price))
+        return 2
+    return 0
 
     # returns a 0 for inconclusive, 1 for buy signal, 2 for sell signal
 def get_bbands_signal(ticker):
@@ -87,8 +108,8 @@ def get_bbands_signal(ticker):
         print('bbands SELL signal at '+str(datetime.now())+ ' at a price of '+str(price))
         return 2
     return 0
-  
-    #runs the main simulation
+
+    #runs the simulation
 def trade_BTC_bbands_test():
     alpaca_ticker = 'BTC/USD'
     pos_ticker = 'BTCUSD'
@@ -118,8 +139,10 @@ def trade_BTC_bbands_test():
                 print('SELL ALL ORDER AT '+str(datetime.now())+ ', but no shares are currently owned.')
         else:
             last_signal = 0
-        
+
+
 # ----------------------- END HELPER FUNCTIONS ----------------------------- #
+
 
 # The following input values would be specific to my Alpaca account:
 API_KEY = ''
@@ -129,3 +152,7 @@ BASE_URL = 'https://paper-api.alpaca.markets'
 alpaca = api.REST(API_KEY, API_SECRET, BASE_URL)
 
 trade_BTC_bbands_test()
+
+
+# maybe loop through the list of open positions and see what should be closed. 
+# then loop through the list of securities and indicators to see if any should be opened
