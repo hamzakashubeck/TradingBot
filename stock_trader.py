@@ -83,7 +83,6 @@ def get_bbands_signal(ticker):
 
     # returns a 0 for inconclusive, 1 for buy signal, 2 for sell signal
 def get_rsi_signal(ticker):
-    price = get_price(ticker)
     rsi = get_rsi_val(ticker)
     if rsi < 30:
         print('RSI BUY signal at '+str(datetime.now()))
