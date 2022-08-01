@@ -122,7 +122,7 @@ def trade_BTC_bbands_test():
         
 # ----------------------- END HELPER FUNCTIONS ----------------------------- #
 
-
+# The following input values would be specific to my Alpaca account:
 API_KEY = ''
 API_SECRET = ''
 BASE_URL = 'https://paper-api.alpaca.markets'
