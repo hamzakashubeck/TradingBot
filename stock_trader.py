@@ -11,8 +11,11 @@ import time
 from datetime import datetime
 
 # TO DO NEXT:
-#     1. Write a function that returns a signal based on several technical indicators at once.
-#        Possibly takes in a list of function pointers and weighs them equally?
+#
+#     1. Write a function that returns a signal based on several technical indicators at once. Possibly takes 
+#        in a list of function pointers and weighs them equally?
+#            One way to do this effeciently may be to modify the algorithm signal functions to take in the
+#            list of historical prices, instead of having each one make a new call to the yahooquery API.
 #
 #     2. Been getting a lot of exceptions involving inability to communicate with yahooquery near the start
 #        of the trade_SPY() function. Could just be internet connection issues, but find a solution and fix.
