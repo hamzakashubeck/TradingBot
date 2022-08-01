@@ -3,6 +3,7 @@ Created on Jul 29, 2022
 
 @author: hamzakashubeck
 '''
+
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
