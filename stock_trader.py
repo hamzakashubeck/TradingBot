@@ -3,7 +3,6 @@ Created on Jul 12, 2022
 
 @author: Hamza Kashubeck
 '''
-
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
@@ -111,8 +110,8 @@ def get_stochrsi_signal(ticker):
         #at this point, the fast k line is rebounding above the 20 mark.
         print('STOCHRSI BUY signal at '+str(datetime.now()))
         return 1
-    if k>80:
-        # sell immediately when the fast k line hits 70
+    if k > 80:
+        # sell immediately when the fast k line hits 80
         print('STOCHRSI SELL signal at '+str(datetime.now()))
         return 2
     
@@ -135,8 +134,8 @@ def trade_SPY(signal_func):
             time.sleep(5)
             signal = 0
         
-        if signal == 1:
-            if last_signal!=1: #BUY
+        if signal == 1: #BUY
+            if last_signal!=1: #only buy once per signal
                 last_signal = 1
                 try:
                     limit_buy(ticker,1,round(get_ask_price(ticker)+0.25,2)) #Buy around the current ask price
@@ -147,10 +146,9 @@ def trade_SPY(signal_func):
                 #order will fail if not enough cash available
                 
         elif signal == 2: #SELL
-            if last_signal!=2: #SELL
+            if last_signal!=2: #only sell once per signal
                 last_signal = 2
                 #qty_held = int(alpaca.get_position(ticker).qty)
-                #if qty_held>0:
                 try:
                     limit_sell(ticker,1,round(get_bid_price(ticker)-0.25,2)) #Sell around the current bid price
                     print('SELL ORDER AT '+str(datetime.now()))
@@ -162,7 +160,6 @@ def trade_SPY(signal_func):
             last_signal = 0
 
 # ----------------------- END HELPER FUNCTIONS ----------------------------- #
-
 
 # The following input values would be specific to my Alpaca account:
 API_KEY = ''
