@@ -1,7 +1,7 @@
 '''
 Created on Jul 12, 2022
 
-@author: hamzakashubeck
+@author: Hamza Kashubeck
 '''
 
 import talib
