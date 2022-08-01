@@ -3,11 +3,21 @@ Created on Jul 12, 2022
 
 @author: Hamza Kashubeck
 '''
+
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
 import time
 from datetime import datetime
+
+# TO DO NEXT:
+#     1. Write a function that returns a signal based on several technical indicators at once.
+#        Possibly takes in a list of function pointers and weighs them equally?
+#
+#     2. Been getting a lot of exceptions involving inability to communicate with yahooquery near the start
+#        of the trade_SPY() function. Could just be internet connection issues, but find a solution and fix.
+    
+
 
 # ---------------- ALPACA HELPER FUNCTIONS HERE -------------------- #
 
@@ -128,7 +138,6 @@ def trade_SPY(signal_func):
             time.sleep(1)
             signal = signal_func(ticker)
         except Exception as e:
-            # been getting a lot of exceptions involving inability to communicate with yahooquery. check this out later.
             print(e)
             time.sleep(5)
             signal = 0
