@@ -135,18 +135,6 @@ def trade_SPY(signal_func):
                     print(e)
                     #order will fail if not enough cash available, or if something is up with the order
                     # handle differently: if e is due to buying power vs. the limit sell failing because the buy didn't execute
-                
-                """  elif signal == 2: #SELL
-            if last_signal!=2: #only sell once per signal
-                last_signal = 2
-                #qty_held = int(alpaca.get_position(ticker).qty)
-                try:
-                    limit_sell(ticker,1,round(get_bid_price(ticker)-0.25,2)) #Sell around the current bid price
-                    print('SELL ORDER AT '+str(datetime.now()))
-                except Exception as e:
-                    print(e)
-                    print('SELL ORDER AT '+str(datetime.now())+ ', but no shares are currently owned.')
-                    """
         else:
             #print('no signal to report')
             last_signal = 0
