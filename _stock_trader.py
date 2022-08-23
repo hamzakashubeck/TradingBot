@@ -77,8 +77,17 @@ def get_bbands(ticker):
 
     #retrieves stochastic rsi values calculated from recent minute closing prices from yahoo finance
 def get_stochrsi(ticker):
-    candles = Ticker(ticker).history(period='2d', interval='1m')
+    candles = Ticker(ticker).history(period='3d', interval='1m')
     return talib.stream_STOCHRSI(candles.close, fastk_period=5)
+
+    #retrieves adx, di+, and di- values calculated from recent minute prices from yahoo finance
+def get_adx(ticker):
+    candles = Ticker(ticker).history(period='3d', interval='1m')
+    adx = talib.stream_ADX(candles.high, candles.low, candles.close)
+    di_plus = talib.stream_PLUS_DI(candles.high, candles.low, candles.close)
+    di_minus = talib.stream_MINUS_DI(candles.high, candles.low, candles.close)
+    return adx, di_plus, di_minus
+    
 
 # --------------------- ALGORITHM SIGNAL FUNCTIONS --------------------------- #
 
@@ -119,7 +128,7 @@ def get_stochrsi_signal(ticker):
         print("entered stochrsi buy signal loop:")
         while k<20:
             #do nothing
-            time.sleep(0.5)
+            time.sleep(1)
             k, d = get_stochrsi(ticker)
             print(k)
         #at this point, the fast k line is rebounding above the 20 mark.
@@ -130,6 +139,19 @@ def get_stochrsi_signal(ticker):
         print('STOCHRSI SELL signal at '+str(datetime.now()))
         return 2
     
+    # returns a 0 for inconclusive, 1 for buy signal, 2 for sell signal
+def get_adx_signal(ticker):
+    # ADX above 20 and DI+ over DI- signifies an uptrend
+    # ADX above 20 and DI- above DI+ signifies a downtrend
+    adx, di_plus, di_minus = get_adx(ticker)
+    if adx >20:
+        if di_plus > di_minus:
+            print('ADX UPTREND signal at '+str(datetime.now()))
+            return 1
+        else:
+            print('ADX DOWNTREND signal at '+str(datetime.now()))
+            return 2
+    return 0
     
 # --------------------- TESTING/SIMULATION FUNCTIONS --------------------------- #
     
@@ -148,11 +170,16 @@ def trade_SPY(signal_func):
             time.sleep(5)
             signal = 0
         
+        #cancel all unresolved orders
+        alpaca.cancel_all_orders()
+        
         if signal == 1: #BUY
+            
+            # if buy signal is active, and there aren't any shares currently held
             if last_signal!=1: #only buy once per signal
                 last_signal = 1
                 try:
-                    limit_buy(ticker,1,round(get_ask_price(ticker)+0.25,2)) #Buy around the current ask price
+                    limit_buy(ticker,1,round(get_ask_price(ticker)+0.2,2)) #Buy around the current ask price
                     print('BUY ORDER AT '+str(datetime.now()))
                 except Exception as e:
                     print(e)
@@ -160,11 +187,12 @@ def trade_SPY(signal_func):
                 #order will fail if not enough cash available
                 
         elif signal == 2: #SELL
+            
             if last_signal!=2: #only sell once per signal
                 last_signal = 2
                 #qty_held = int(alpaca.get_position(ticker).qty)
                 try:
-                    limit_sell(ticker,1,round(get_bid_price(ticker)-0.25,2)) #Sell around the current bid price
+                    limit_sell(ticker,1,round(get_bid_price(ticker)-0.2,2)) #Sell around the current bid price
                     print('SELL ORDER AT '+str(datetime.now()))
                 except Exception as e:
                     print(e)
@@ -176,8 +204,8 @@ def trade_SPY(signal_func):
 # ----------------------- END HELPER FUNCTIONS ----------------------------- #
 
 # The following input values would be specific to my Alpaca account:
-API_KEY = 'PK0OXHA2VMTEKUYTWTQP'
-API_SECRET = 'Lx8UrXCo3UFHH9BRAWysASkFsQD2LjjtMX0x1NMz'
+API_KEY = ''
+API_SECRET = ''
 BASE_URL = 'https://paper-api.alpaca.markets'
 
 alpaca = api.REST(API_KEY, API_SECRET, BASE_URL)
@@ -186,6 +214,3 @@ alpaca = api.REST(API_KEY, API_SECRET, BASE_URL)
 signal_func = get_stochrsi_signal
 
 trade_SPY(signal_func)
-
-# maybe loop through the list of open positions and see what should be closed. 
-# then loop through the list of securities and indicators to see if any should be opened
