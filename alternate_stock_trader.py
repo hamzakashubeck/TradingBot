@@ -23,7 +23,7 @@ from datetime import datetime
 #     Every now and then (maybe based on indicators, maybe not) it sells and rebuys at a lower price.
 #     Maybe that way it will be possible to actually beat the s&p? idk tho
 
-# MAKE ORDERS GOOD UNTIL CANCELLED, NOT DAY ORDERS
+# MAKE SELL ORDERS GOOD UNTIL CANCELLED, NOT DAY ORDERS
     
 
 
