@@ -23,7 +23,7 @@ from datetime import datetime
 #     Every now and then (maybe based on indicators, maybe not) it sells and rebuys at a lower price.
 #     Maybe that way it will be possible to actually beat the s&p? idk tho
 
-# MAKE SELL ORDERS GOOD UNTIL CANCELLED, NOT DAY ORDERS
+# MAKE ORDERS GOOD UNTIL CANCELLED, NOT DAY ORDERS
     
 
 
@@ -43,7 +43,7 @@ def limit_buy(ticker,qty,limit):
     
     # submits a limit sell order. returns the resulting Alpaca order object
 def limit_sell(ticker,qty,limit):
-    return alpaca.submit_order(ticker.upper(), qty, side='sell', type='limit', limit_price=limit)
+    return alpaca.submit_order(ticker.upper(), qty, side='sell', type='limit', time_in_force = 'gtc', limit_price=limit)
     
     # submits a trailing stop sell order for a given percent. returns the resulting order object
 def trailing_stop_percent(ticker,qty,percent):
@@ -86,9 +86,6 @@ def get_stochrsi_signal(ticker):
     if k < 20:
         # wait until the stochastic rsi fast k line rebounds above the oversold mark
         
-#         is this the best way to solve this problem? this will need to be changed before 
-#         it's possible to use multiple indicators simultaneously
-        
         print("entered stochrsi buy signal loop:")
         while k<20:
             #do nothing
@@ -98,10 +95,6 @@ def get_stochrsi_signal(ticker):
         #at this point, the fast k line is rebounding above the 20 mark.
         print('STOCHRSI BUY signal at '+str(datetime.now()))
         return 1
-    if k > 80:
-        # sell immediately when the fast k line hits 80
-        print('STOCHRSI SELL signal at '+str(datetime.now()))
-        return 2
     
 # --------------------- TESTING/SIMULATION FUNCTIONS --------------------------- #
     
@@ -135,6 +128,8 @@ def trade_SPY(signal_func):
                     print(e)
                     #order will fail if not enough cash available, or if something is up with the order
                     # handle differently: if e is due to buying power vs. the limit sell failing because the buy didn't execute
+
+
         else:
             #print('no signal to report')
             last_signal = 0
