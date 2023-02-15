@@ -11,6 +11,10 @@ Created on Jul 12, 2022
   
 '''
 
+# NEXT STEPS:
+#    Fix indicator calculation or candle scraping. 
+#        Need stochastic momentum index. This indicator or historical query is giving bad info/signals.
+
 import talib
 import alpaca_trade_api as api
 from yahooquery import Ticker
@@ -37,6 +41,15 @@ def limit_buy(ticker,qty,limit):
 def limit_sell(ticker,qty,limit):
     return alpaca.submit_order(ticker.upper(), qty, side='sell', type='limit', time_in_force = 'gtc', limit_price=limit)
     
+# submits a fill or kill buy order. returns the resulting Alpaca order object
+def fok_buy(ticker,qty,limit):
+    return alpaca.submit_order(ticker.upper(), qty, side='buy', type='limit', time_in_force = 'fok', limit_price=limit)
+    
+    # submits a fill or kill sell order. returns the resulting Alpaca order object
+def fok_sell(ticker,qty,limit):
+    return alpaca.submit_order(ticker.upper(), qty, side='sell', type='limit', time_in_force = 'fok', limit_price=limit)
+    
+    
     # submits a trailing stop sell order for a given percent. returns the resulting order object
 def trailing_stop_percent(ticker,qty,percent):
     return alpaca.submit_order(ticker.upper(), qty, side='sell', type='trailing_stop', trail_percent=percent)
@@ -60,7 +73,7 @@ def kill_orders(order_side):
 
     #retrieves the current market price from yahoo finance
 def get_price(ticker):
-    return round(Ticker(ticker).price[ticker]['regularMarketPrice'],2)
+    return alpaca.get_latest_trade('SPY').p
 
     #retrieves the current bid price from yahoo finance
 def get_bid_price(ticker):
@@ -87,7 +100,7 @@ def get_stochrsi_signal(ticker):
         # wait until the stochastic rsi fast k line rebounds above the oversold mark
         
         print("entered stochrsi buy signal loop:")
-        while k<20:
+        while k<5:
             #do nothing
             time.sleep(1)
             k, d = get_stochrsi(ticker)
@@ -100,7 +113,7 @@ def get_stochrsi_signal(ticker):
         # wait until the stochastic rsi fast k line falls below the undersold mark
         
         print("entered stochrsi sell signal loop:")
-        while k>80:
+        while k>95:
             #do nothing
             time.sleep(1)
             k, d = get_stochrsi(ticker)
@@ -118,7 +131,7 @@ def trade_SPY(signal_func):
     ticker = 'SPY'
     
     #have some shares on hand to start
-    market_buy('SPY',10);
+    #market_buy('SPY',100);
     
     while(True):
         
@@ -132,19 +145,15 @@ def trade_SPY(signal_func):
         
         if signal == 1: #BUY
             try:
-                limit_price = float(get_ask_price(ticker))+0.25
-                buy_order = limit_buy(ticker,1,round(limit_price,2)) #Buy around the current ask price
+                limit_price = float(get_price(ticker))+0.15
+                buy_order = fok_buy(ticker,1,round(limit_price,2)) #Buy around the current ask price
                 print('BUY ORDER AT '+str(datetime.now()))
-                time.sleep(10) # give it a few seconds to execute the buy order (or not execute it)
                 
-                try:
-                    alpaca.cancel_order(buy_order.id) #cancel the order if it hasn't executed by now
-                except Exception as e:
-                    print('Buy Order Executed Successfully')
+                time.sleep(3)
                 
                 bought_price = alpaca.get_order(buy_order.id).filled_avg_price
                 limit_sell(ticker,1,round(float(bought_price)+0.1,2))
-                print('SELL ORDER SUBMITTED FOR'+str(bought_price))
+                print('SELL ORDER SUBMITTED FOR'+str(float(bought_price)+0.1))
             except Exception as e:
                 print(e)
                 #order will fail if not enough cash available, or if something is up with the order
@@ -152,19 +161,15 @@ def trade_SPY(signal_func):
     
         elif signal == 2: #SELL
             try:
-                limit_price = float(get_ask_price(ticker))-0.25
-                sell_order = limit_sell(ticker,1,round(limit_price,2)) #Buy around the current ask price
+                limit_price = float(get_price(ticker))-0.15
+                sell_order = fok_sell(ticker,1,round(limit_price,2)) #Buy around the current ask price
                 print('SELL ORDER AT '+str(datetime.now()))
-                time.sleep(10) # give it a few seconds to execute the sell order (or not execute it)
-                
-                try:
-                    alpaca.cancel_order(sell_order.id) #cancel the order if it hasn't executed by now
-                except Exception as e:
-                    print('Sell Order Executed Successfully')
+ 
+                time.sleep(3)
                 
                 sold_price = alpaca.get_order(sell_order.id).filled_avg_price
                 limit_buy(ticker,1,round(float(sold_price)-0.1,2))
-                print('RE-BUY ORDER SUBMITTED FOR'+str(sold_price))
+                print('RE-BUY ORDER SUBMITTED FOR'+str(float(sold_price)-0.1))
             except Exception as e:
                 print(e)
                 #order will fail if not enough cash available, or if something is up with the order
