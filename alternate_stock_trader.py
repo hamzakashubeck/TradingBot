@@ -131,7 +131,7 @@ def trade_SPY(signal_func):
     ticker = 'SPY'
     
     #have some shares on hand to start
-    #market_buy('SPY',100);
+    market_buy('SPY',100);
     
     while(True):
         
